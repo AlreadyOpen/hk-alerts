@@ -11,7 +11,7 @@ REPO = 'alreadyopen/hk-alerts'
 UA = {'User-Agent': 'AlreadyOpen hk-alerts (https://github.com/AlreadyOpen/hk-alerts)'}
 AQHI = 'https://www.aqhi.gov.hk/epd/ddata/html/out/aqhi_ind_rss_Eng.xml'
 STATIONS = ('https://portal.csdi.gov.hk/server/rest/services/common/epd_rcd_1629267205214_40635/FeatureServer/0/query'
-            '?where=1%3D1&outFields=NAME_EN,SEARCH01_EN&outSR=4326&f=geojson')
+            '?where=1%3D1&outFields=*&outSR=4326&f=geojson')   # all fields: EPD renames them 14-16 Oct 2026 (NAME_EN -> NameEN)
 PRESS = 'https://www.info.gov.hk/gia/rss/general_en.xml'
 
 
@@ -24,7 +24,9 @@ def aqhi():
     """'Central/Western - General Stations: 5 Moderate - Wed, 14 Oct 2026 08:30' per item, joined to the CSDI station by name"""
     at = {}
     for f in json.loads(get(STATIONS))['features']:
-        at[re.sub(r'\s+Air Quality Monitoring Station$', '', f['properties']['NAME_EN']).strip().lower()] = f
+        p = f['properties']
+        name = p.get('NameEN') or p.get('NAME_EN') or p.get('FacilityName') or ''   # new name, old name, the AQHI layer's name
+        at[re.sub(r'\s+Air Quality Monitoring Station$', '', name).strip().lower()] = f
     out, missing = [], []
     for it in ET.fromstring(get(AQHI)).iter('item'):
         name, desc = it.findtext('title', '').strip(), it.findtext('description', '').strip()
