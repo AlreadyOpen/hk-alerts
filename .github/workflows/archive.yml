@@ -1,0 +1,29 @@
+# Weekly: each complete Hong Kong month of history (live/<feed>-YYYY-MM-DD.parquet) to its own Kaggle dataset (kaggle_archive.py);
+# days leave the bucket only once Kaggle lists them.
+name: archive
+on:
+  schedule:
+    - cron: '43 5 * * 2'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: archive
+  cancel-in-progress: false
+jobs:
+  archive:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97   # v7.0.0
+        with:
+          python-version: '3.14'
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: python kaggle_archive.py test
+      - name: archive
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+        run: python kaggle_archive.py
