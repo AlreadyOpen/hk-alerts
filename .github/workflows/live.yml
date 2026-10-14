@@ -1,0 +1,27 @@
+# Hong Kong alerts without CORS (live.py): AQHI and Government press releases, every 15 minutes. Dispatched by AlreadyOpen/heartbeat
+# (GitHub delays or drops schedules under load); the cron below is the backup. A source that fails is skipped for that run.
+name: live
+on:
+  schedule:
+    - cron: '7,22,37,52 * * * *'   # off the busy top of the hour
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: live
+  cancel-in-progress: false
+jobs:
+  live:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97   # v7.0.0
+        with:
+          python-version: '3.14'
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: snapshot
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: python live.py
